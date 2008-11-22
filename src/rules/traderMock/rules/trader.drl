@@ -1,0 +1,52 @@
+#created on: 2008-4-2
+package com.bestwiz
+import cn.bestwiz.jhf.core.jms.bean.OrderBindInfo;
+
+#list any import classes here.
+
+
+
+#declare any global variables here
+
+
+
+#1# OPM注文：根据OPM传过来的汇率带上是否为manaual汇率的标志,如果是manaul则直接进行约定
+#           或者 如果是自设交易也直接进行约定
+rule "TRADER_tradeType_rule1"
+	
+	when
+		orderBindInfo : OrderBindInfo( type == 10 ,inManualStatus == 1 )
+		or
+		orderBindInfo : OrderBindInfo( type == 10 ,mode == 2 ) 
+	then
+		System.out.println("sendToExecWriter(orderBindInfo, true, null) ...[Trader Opm Order Manual Mode]");
+		
+end
+
+
+
+#2# OPM注文：如果不是手动汇率，并且mode不是自设模式 ，是滞留模式。 则以滞留模式交易 
+rule "TRADER_tradeType_rule2"
+
+	when
+		orderBindInfo : OrderBindInfo( type == 10 ,inManualStatus != 1 ,mode == 1)
+	then 
+		System.out.println("sendToExecWriter(orderBindInfo, false, null) ... [Trader Opm Order Stay position Mode]");	
+
+end
+
+
+#3# OPM注文：如果不是手动汇率，并且mode不是自设模式 ，也不是滞留模式。则以通常模式进行交易 
+rule "TRADER_tradeType_rule3"
+	
+	when
+		orderBindInfo : OrderBindInfo( type == 10 ,inManualStatus != 1 ,mode != 1,mode != 2)
+	then
+		System.out.println("sendToCover(orderBindInfo); ... [Trader Opm Order Normal Mode Send to Hedge]");	
+	
+end
+
+
+
+
+
